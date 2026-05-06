@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Premium Airline Booking</title>
+
+<style>
+
+/* BACKGROUND */
+body {
+    margin: 0;
+    font-family: 'Segoe UI';
+    color: white;
+    background: url('https://images.unsplash.com/photo-1504196606672-aef5c9cefc92?q=80&w=2070') no-repeat center/cover;
+}
+
+/* ANIMATED OVERLAY */
+body::before {
+    content:"";
+    position:fixed;
+    width:100%;
+    height:100%;
+    background: linear-gradient(120deg, maroon, darkred, green);
+    opacity:0.7;
+    z-index:-1;
+    animation: bgMove 8s infinite alternate;
+}
+
+@keyframes bgMove {
+    0% {filter:hue-rotate(0);}
+    100% {filter:hue-rotate(120deg);}
+}
+
+/* HEADER */
+header {
+    text-align:center;
+    padding:20px;
+    font-size:30px;
+    background:rgba(0,0,0,0.6);
+}
+
+/* CONTAINER */
+.container {
+    display:none;
+    width:85%;
+    margin:30px auto;
+    padding:25px;
+    border-radius:15px;
+    backdrop-filter: blur(15px);
+    background:rgba(255,255,255,0.1);
+}
+
+.active { display:block; }
+
+/* BUTTON */
+button {
+    padding:12px 20px;
+    border:none;
+    border-radius:10px;
+    color:white;
+    cursor:pointer;
+    background:linear-gradient(45deg,red,green);
+    transition:0.4s;
+}
+button:hover { transform:scale(1.1); }
+
+/* FLIGHTS */
+.flights { display:flex; flex-wrap:wrap; }
+.flight {
+    width:30%;
+    margin:10px;
+    padding:15px;
+    background:rgba(255,255,255,0.2);
+    border-radius:10px;
+}
+
+/* SEATS */
+.seats {
+    display:grid;
+    grid-template-columns:repeat(6,50px);
+    gap:10px;
+}
+.seat {
+    width:50px;
+    height:50px;
+    background:green;
+    border-radius:5px;
+}
+.seat.selected { background:orange; }
+
+/* SUCCESS SCREEN ANIMATION */
+.success {
+    text-align:center;
+    animation: pop 1s ease;
+}
+
+@keyframes pop {
+    0% {transform:scale(0);}
+    100% {transform:scale(1);}
+}
+
+.glow {
+    font-size:40px;
+    color:#00ffcc;
+    animation: glow 1.5s infinite alternate;
+}
+
+@keyframes glow {
+    from { text-shadow:0 0 10px cyan; }
+    to { text-shadow:0 0 30px lime; }
+}
+
+/* HISTORY BOX */
+.history {
+    margin-top:20px;
+    padding:15px;
+    background:rgba(0,0,0,0.5);
+    border-radius:10px;
+    max-height:200px;
+    overflow:auto;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>✈️ Airline Booking</header>
+
+<!-- STEP 1 -->
+<div class="container active" id="step1">
+<h2>Search Flights</h2>
+<button onclick="goToStep(2)">Search</button>
+</div>
+
+<!-- STEP 2 -->
+<div class="container" id="step2">
+<h2>Flights</h2>
+<div id="flights"></div>
+</div>
+
+<!-- STEP 3 -->
+<div class="container" id="step3">
+<h2>Select Seats</h2>
+<div class="seats" id="seats"></div>
+<h3 id="price"></h3>
+<button onclick="goToStep(4)">Next</button>
+</div>
+
+<!-- STEP 4 -->
+<div class="container" id="step4">
+<h2>Passenger</h2>
+<input id="name" placeholder="Name">
+<button onclick="goToStep(5)">Next</button>
+</div>
+
+<!-- STEP 5 -->
+<div class="container" id="step5">
+<h2>Payment</h2>
+<button onclick="confirmBooking()">Pay</button>
+</div>
+
+<!-- STEP 6 (UPGRADED) -->
+<div class="container" id="step6">
+<div class="success">
+<div class="glow">🎉 BOOKING CONFIRMED 🎉</div>
+<p id="summary"></p>
+
+<h3>📜 Booking History</h3>
+<div class="history" id="history"></div>
+
+<button onclick="goToStep(1)">Book Again</button>
+</div>
+</div>
+
+<script>
+
+let seatsSelected=[];
+let historyData=[];
+
+/* STEP NAV */
+function goToStep(s){
+document.querySelectorAll('.container').forEach(c=>c.classList.remove('active'));
+document.getElementById('step'+s).classList.add('active');
+
+if(s===2) loadFlights();
+if(s===3) createSeats();
+}
+
+/* FLIGHTS */
+function loadFlights(){
+let f=document.getElementById('flights');
+f.innerHTML="";
+for(let i=1;i<=5;i++){
+f.innerHTML+=`<div class="flight">
+Flight ${i}<br>
+<button onclick="goToStep(3)">Select</button>
+</div>`;
+}
+}
+
+/* SEATS */
+function createSeats(){
+let s=document.getElementById('seats');
+s.innerHTML="";
+seatsSelected=[];
+
+for(let i=0;i<36;i++){
+let seat=document.createElement('div');
+seat.className="seat";
+
+seat.onclick=()=>{
+seat.classList.toggle("selected");
+
+if(seatsSelected.includes(i)){
+seatsSelected=seatsSelected.filter(x=>x!==i);
+}else{
+seatsSelected.push(i);
+}
+
+updatePrice();
+};
+
+s.appendChild(seat);
+}
+}
+
+/* PRICE */
+function updatePrice(){
+document.getElementById("price").innerText=
+"₹"+(seatsSelected.length*2500);
+}
+
+/* CONFIRM BOOKING */
+function confirmBooking(){
+
+let name=document.getElementById("name").value;
+let total=seatsSelected.length*2500;
+
+let booking={
+name:name,
+seats:seatsSelected.length,
+price:total
+};
+
+historyData.push(booking);
+
+/* SHOW SUMMARY */
+document.getElementById("summary").innerText=
+`Name: ${name} | Seats: ${booking.seats} | ₹${booking.price}`;
+
+/* SHOW HISTORY */
+let h=document.getElementById("history");
+h.innerHTML="";
+historyData.forEach(b=>{
+h.innerHTML+=`<p>👤 ${b.name} | Seats: ${b.seats} | ₹${b.price}</p>`;
+});
+
+goToStep(6);
+}
+
+</script>
+
+</body>
+</html>
